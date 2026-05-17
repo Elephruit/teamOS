@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command Center | Executive OS</title>
+    <style>
+        :root {
+            --bg: #09090b;
+            --sidebar-bg: #18181b;
+            --card-bg: #18181b;
+            --text: #fafafa;
+            --text-dim: #a1a1aa;
+            --accent: #3f3f46;
+            --border: #27272a;
+            --primary: #ffffff;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        aside {
+            width: 240px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 1rem;
+        }
+
+        .logo {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            padding: 0 0.5rem;
+            color: var(--primary);
+            letter-spacing: -0.025em;
+        }
+
+        nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background-color: var(--accent);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background-color: var(--accent);
+            color: var(--text);
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            stroke-width: 2;
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .top-bar {
+            height: 60px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            background-color: var(--bg);
+            z-index: 10;
+        }
+
+        .quick-add {
+            flex: 1;
+            max-width: 600px;
+            background: var(--sidebar-bg);
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quick-add input {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            width: 100%;
+            outline: none;
+            font-size: 0.875rem;
+        }
+
+        .quick-add kbd {
+            background: var(--accent);
+            border-radius: 0.25rem;
+            padding: 0.1rem 0.4rem;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+        }
+
+        .content-zone {
+            display: none;
+            padding: 2rem;
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .content-zone.active {
+            display: block;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Grid & Cards */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .card:hover {
+            border-color: var(--accent);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .status-pill {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-on-track, .status-green { background: rgba(34, 197, 94, 0.1); color: var(--success); }
+        .status-at-risk, .status-yellow { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .status-blocked, .status-red { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+        /* Boards */
+        .board-container {
+            display: flex;
+            gap: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+        }
+        .board-column {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(24, 24, 27, 0.5);
+            border-radius: 0.75rem;
+            padding: 1rem;
+        }
+        .column-header {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .todo-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+        }
+        .todo-item:hover { border-color: var(--accent); }
+        .todo-check { width: 16px; height: 16px; border: 1.5px solid var(--text-dim); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .todo-check.done { background: var(--success); border-color: var(--success); }
+        .todo-text.done { text-decoration: line-through; color: var(--text-dim); }
+
+        /* Meetings */
+        .meeting-strip { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
+        .day-card { flex: 1; background: var(--card-bg); border: 1px solid var(--border); padding: 0.75rem; border-radius: 0.5rem; text-align: center; cursor: pointer; }
+        .day-card.active { border-color: var(--primary); background: var(--accent); }
+        .day-name { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; }
+        .day-num { font-size: 1.1rem; font-weight: 700; margin-top: 0.25rem; }
+
+        /* Decisions */
+        .decision-card { margin-bottom: 0.75rem; }
+        .decision-age { font-size: 0.7rem; color: var(--text-dim); }
+
+        /* Panel */
+        #panel-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 100;
+        }
+
+        #detail-panel {
+            position: fixed;
+            top: 0;
+            right: -600px;
+            width: 600px;
+            height: 100%;
+            background: var(--sidebar-bg);
+            border-left: 1px solid var(--border);
+            z-index: 101;
+            transition: right 0.3s ease;
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        #detail-panel.open {
+            right: 0;
+        }
+
+        /* Utilities */
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .mb-1 { margin-bottom: 1rem; }
+        .search-input {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            padding: 0.5rem 1rem;
+            color: var(--text);
+            font-size: 0.875rem;
+            flex: 1;
+        }
+
+        #pulse-editor {
+            width: 100%;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-dim);
+            font-size: 0.9375rem;
+            line-height: 1.6;
+            resize: none;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            min-height: 80px;
+            transition: all 0.2s;
+        }
+
+        #pulse-editor:focus {
+            background: var(--bg);
+            border-color: var(--border);
+            color: var(--text);
+            outline: none;
+        }
+
+        .flag-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        .bg-green { background-color: var(--success); }
+        .bg-yellow { background-color: var(--warning); }
+        .bg-red { background-color: var(--danger); }
+
+        .profile-header { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2.5rem; }
+        .avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: var(--text-dim); }
+        
+        .note-entry { background: var(--bg); border: 1px solid var(--border); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; }
+        .note-date { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+    <aside>
+        <div class="logo">COMMAND CENTER</div>
+        <nav>
+            <a class="nav-item active" data-zone="dashboard">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                Dashboard
+            </a>
+            <a class="nav-item" data-zone="projects">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10h10V2z"/><path d="M22 2h-10v10h10V2z"/><path d="M12 12H2v10h10V12z"/><path d="M22 12h-10v10h10V12z"/></svg>
+                Projects
+            </a>
+            <a class="nav-item" data-zone="team">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Team
+            </a>
+            <a class="nav-item" data-zone="todos">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10h10V2z"/><path d="m9 7-2 2-1-1"/><path d="M22 2h-10v10h10V2z"/><path d="m19 7-2 2-1-1"/><path d="M12 12H2v10h10V12z"/><path d="m9 17-2 2-1-1"/><path d="M22 12h-10v10h10V12z"/><path d="m19 17-2 2-1-1"/></svg>
+                Todos
+            </a>
+            <a class="nav-item" data-zone="meetings">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Meetings
+            </a>
+        </nav>
+        <div style="margin-top: auto; padding-top: 2rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <button onclick="store.export()" class="nav-item" style="background: transparent; border: none; width: 100%;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Backup Data
+            </button>
+        </div>
+    </aside>
+
+    <main>
+        <header class="top-bar">
+            <div class="quick-add">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                <input type="text" id="quick-add-input" placeholder="Capture something fast...">
+                <kbd>/</kbd>
+            </div>
+        </header>
+
+        <section id="dashboard" class="content-zone active">
+            <h1>Command Dashboard</h1>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Today's Meetings</div>
+                    <div class="stat-value" id="stat-meetings">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Open Decisions</div>
+                    <div class="stat-value" id="stat-decisions">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Team Flags</div>
+                    <div class="stat-value" id="stat-flags">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pulse</div>
+                <textarea id="pulse-editor" placeholder="Record the state of the portfolio..."></textarea>
+            </div>
+        </section>
+
+        <section id="projects" class="content-zone">
+            <div class="flex-between mb-1">
+                <h1>Projects & Initiatives</h1>
+                <button onclick="ui.openProjectModal()" style="background: var(--primary); color: var(--bg); border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 600; cursor: pointer;">+ New Project</button>
+            </div>
+            <div class="toolbar"><input type="text" id="project-search" class="search-input" placeholder="Filter projects..."></div>
+            <div id="project-list" class="grid"></div>
+        </section>
+
+        <section id="team" class="content-zone">
+            <div class="flex-between mb-1">
+                <h1>My Team</h1>
+                <button onclick="ui.openTeamModal()" style="background: var(--primary); color: var(--bg); border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 600; cursor: pointer;">+ Add Member</button>
+            </div>
+            <div id="team-list" class="grid"></div>
+        </section>
+
+        <section id="todos" class="content-zone">
+            <h1>Todos & Decisions</h1>
+            <div class="board-container">
+                <div class="board-column" data-col="today">
+                    <div class="column-header">Today <span id="count-today">0</span></div>
+                    <div id="list-today"></div>
+                </div>
+                <div class="board-column" data-col="week">
+                    <div class="column-header">This Week <span id="count-week">0</span></div>
+                    <div id="list-week"></div>
+                </div>
+                <div class="board-column" data-col="parking">
+                    <div class="column-header">Parking Lot <span id="count-parking">0</span></div>
+                    <div id="list-parking"></div>
+                </div>
+            </div>
+            
+            <h2 style="margin-top: 3rem; margin-bottom: 1.5rem;">Open Decisions</h2>
+            <div id="decision-list" class="grid"></div>
+        </section>
+
+        <section id="meetings" class="content-zone">
+            <h1>Meetings</h1>
+            <div class="meeting-strip" id="meeting-strip"></div>
+            <div class="stat-card" style="min-height: 400px;">
+                <div id="meeting-detail">Select a day to view meetings.</div>
+            </div>
+        </section>
+    </main>
+
+    <div id="panel-overlay" onclick="ui.closePanel()"></div>
+    <div id="detail-panel"><div id="panel-content"></div></div>
+
+    <script>
+        const DB_KEY = 'teamos_data';
+        const defaultData = {
+            pulse: '',
+            projects: [
+                { id: 1, title: 'Project Phoenix', owner: 'Sarah Chen', status: 'on-track', summary: 'Infrastructure migration to hybrid cloud.', notes: '', decisions: [] }
+            ],
+            team: [
+                { id: 1, name: 'Sarah Chen', role: 'Principal Architect', tenure: '3 years', priority: 'Cloud Migration', last1on1: '2026-05-12', flag: 'green', notes: [] }
+            ],
+            todos: [
+                { id: 1, text: 'Review architecture draft', column: 'today', done: false },
+                { id: 2, text: 'Schedule Q3 planning', column: 'week', done: false }
+            ],
+            meetings: [],
+            decisions: [
+                { id: 1, text: 'Approve vendor X for cloud storage', status: 'open', created: '2026-05-14' }
+            ]
+        };
+
+        const store = {
+            get: () => JSON.parse(localStorage.getItem(DB_KEY)) || defaultData,
+            set: (data) => { localStorage.setItem(DB_KEY, JSON.stringify(data)); ui.render(); },
+            update: (updater) => { const data = store.get(); updater(data); store.set(data); },
+            export: () => {
+                const data = store.get();
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `teamos_backup_${new Date().toISOString().slice(0,10)}.json`;
+                a.click();
+            }
+        };
+
+        const ui = {
+            render: () => {
+                const data = store.get();
+                document.getElementById('pulse-editor').value = data.pulse;
+                document.getElementById('stat-meetings').innerText = data.meetings.length;
+                document.getElementById('stat-decisions').innerText = data.decisions.filter(d => d.status === 'open').length;
+                document.getElementById('stat-flags').innerText = data.team.filter(m => m.flag && m.flag !== 'green').length;
+
+                // Projects
+                const pSearch = document.getElementById('project-search').value.toLowerCase();
+                document.getElementById('project-list').innerHTML = data.projects.filter(p => p.title.toLowerCase().includes(pSearch)).map(p => `
+                    <div class="card" onclick="ui.openProject(${p.id})">
+                        <div class="card-header"><div class="card-title">${p.title}</div><span class="status-pill status-${p.status}">${p.status.replace('-', ' ')}</span></div>
+                        <div class="card-summary">${p.summary}</div><div class="card-meta"><span>Owner: ${p.owner}</span></div>
+                    </div>
+                `).join('');
+
+                // Team
+                document.getElementById('team-list').innerHTML = data.team.map(m => `
+                    <div class="card" onclick="ui.openProfile(${m.id})">
+                        <div class="card-header"><div class="card-title"><span class="flag-dot bg-${m.flag}"></span>${m.name}</div><span class="status-pill" style="background:var(--accent);color:var(--text-dim);">${m.role}</span></div>
+                        <div class="card-summary">Focus: ${m.priority}</div><div class="card-meta"><span>Last 1:1: ${m.last1on1}</span></div>
+                    </div>
+                `).join('');
+
+                // Todos
+                ['today', 'week', 'parking'].forEach(col => {
+                    const colTodos = data.todos.filter(t => t.column === col);
+                    document.getElementById(`count-${col}`).innerText = colTodos.length;
+                    document.getElementById(`list-${col}`).innerHTML = colTodos.map(t => `
+                        <div class="todo-item" onclick="ui.toggleTodo(${t.id})">
+                            <div class="todo-check ${t.done?'done':''}"></div>
+                            <div class="todo-text ${t.done?'done':''}">${t.text}</div>
+                        </div>
+                    `).join('');
+                });
+
+                // Decisions
+                document.getElementById('decision-list').innerHTML = data.decisions.map(d => {
+                    const age = Math.floor((new Date() - new Date(d.created)) / (1000*60*60*24));
+                    return `
+                        <div class="card decision-card">
+                            <div class="card-header"><div class="card-title">${d.text}</div><span class="decision-age">${age} days old</span></div>
+                            <div style="display:flex; gap:0.5rem;">
+                                <button onclick="ui.resolveDecision(${d.id})" style="background:var(--accent);color:var(--text);border:none;padding:0.25rem 0.5rem;border-radius:0.25rem;font-size:0.7rem;cursor:pointer;">Resolve</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Meetings
+                const strip = document.getElementById('meeting-strip');
+                if (strip.innerHTML === '') {
+                    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    const today = new Date();
+                    for(let i=0; i<7; i++) {
+                        const d = new Date(); d.setDate(today.getDate() + i);
+                        strip.innerHTML += `<div class="day-card ${i===0?'active':''}" onclick="ui.selectDay(this, ${d.getTime()})"><div class="day-name">${days[d.getDay()]}</div><div class="day-num">${d.getDate()}</div></div>`;
+                    }
+                }
+            },
+
+            navigate: (zone) => {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.dataset.zone === zone));
+                document.querySelectorAll('.content-zone').forEach(z => z.classList.toggle('active', z.id === zone));
+            },
+
+            toggleTodo: (id) => store.update(data => { const t = data.todos.find(t => t.id === id); if(t) t.done = !t.done; }),
+            resolveDecision: (id) => store.update(data => { data.decisions = data.decisions.filter(d => d.id !== id); }),
+
+            openProfile: (id) => {
+                const member = store.get().team.find(m => m.id === id);
+                document.getElementById('panel-content').innerHTML = `
+                    <div class="profile-header"><div class="avatar">${member.name[0]}</div><div><h2>${member.name}</h2><div style="color:var(--text-dim);font-size:0.875rem;">${member.role}</div></div></div>
+                    <div style="display:flex;gap:1rem;margin-bottom:2rem;">
+                        <button onclick="ui.setMemberFlag(${member.id},'green')" class="status-pill status-green">Normal</button>
+                        <button onclick="ui.setMemberFlag(${member.id},'yellow')" class="status-pill status-yellow">Warning</button>
+                        <button onclick="ui.setMemberFlag(${member.id},'red')" class="status-pill status-red">Critical</button>
+                    </div>
+                    <h3>Interaction Notes</h3>
+                    <textarea id="note-input" class="search-input" style="width:100%;min-height:80px;margin:1rem 0;" placeholder="New note..."></textarea>
+                    <button onclick="ui.addNote(${member.id})" style="background:var(--primary);color:var(--bg);border:none;padding:0.5rem 1rem;border-radius:0.375rem;font-weight:600;width:100%;">Save Note</button>
+                    <div style="margin-top:2rem;">${member.notes.map(n => `<div class="note-entry"><div class="note-date">${new Date(n.date).toLocaleDateString()}</div><div>${n.text}</div></div>`).reverse().join('')}</div>
+                `;
+                ui.openPanel();
+            },
+
+            setMemberFlag: (id, flag) => { store.update(data => { const m = data.team.find(m => m.id === id); if(m) m.flag = flag; }); ui.openProfile(id); },
+            addNote: (id) => { const text = document.getElementById('note-input').value; if(!text) return; store.update(data => { const m = data.team.find(m => m.id === id); if(m) m.notes.push({date:new Date().toISOString(), text}); }); ui.openProfile(id); },
+            
+            openPanel: () => { document.getElementById('panel-overlay').style.display='block'; document.getElementById('detail-panel').classList.add('open'); },
+            closePanel: () => { document.getElementById('detail-panel').classList.remove('open'); document.getElementById('panel-overlay').style.display='none'; },
+            
+            selectDay: (el, time) => {
+                document.querySelectorAll('.day-card').forEach(c => c.classList.remove('active'));
+                el.classList.add('active');
+                document.getElementById('meeting-detail').innerHTML = `<h3 class="mb-1">Meetings for ${new Date(time).toLocaleDateString()}</h3><p style="color:var(--text-dim);">No meetings scheduled.</p><button onclick="ui.addMeeting(${time})" style="margin-top:1rem;background:var(--accent);color:var(--text);border:none;padding:0.5rem 1rem;border-radius:0.375rem;cursor:pointer;">+ Add Meeting</button>`;
+            },
+
+            openProjectModal: () => { const title = prompt("Project Title:"); if(title) store.update(data => data.projects.push({id:Date.now(),title,owner:'TBD',status:'on-track',summary:'...',notes:[],decisions:[]})); },
+            openTeamModal: () => { const name = prompt("Name:"); if(name) store.update(data => data.team.push({id:Date.now(),name,role:'Member',tenure:'New',priority:'TBD',last1on1:'Never',flag:'green',notes:[]})); }
+        };
+
+        document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', () => ui.navigate(i.dataset.zone)));
+        document.getElementById('pulse-editor').addEventListener('input', (e) => store.update(data => data.pulse = e.target.value));
+        document.getElementById('project-search').addEventListener('input', ui.render);
+
+        const qa = document.getElementById('quick-add-input');
+        qa.addEventListener('keydown', (e) => {
+            if(e.key === 'Enter' && qa.value.trim()){
+                const val = qa.value.trim();
+                store.update(data => {
+                    if(val.startsWith('? ')) data.decisions.push({id:Date.now(), text: val.slice(2), status: 'open', created: new Date().toISOString()});
+                    else data.todos.push({id:Date.now(), text: val, column: 'today', done: false});
+                });
+                qa.value = '';
+            }
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if(e.key === '/' && document.activeElement !== qa && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); qa.focus(); }
+            if(e.key === 'Escape') ui.closePanel();
+        });
+
+        if(!localStorage.getItem(DB_KEY)) store.set(defaultData);
+        ui.render();
+    </script>
+</body>
+</html>
